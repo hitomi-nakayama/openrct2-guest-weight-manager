@@ -211,30 +211,45 @@ class WindowBuilder {
   _width?: number;
   _height?: number;
   _title?: string;
-  widgets: WidgetBuilder[];
+  widgets?: WidgetBuilder[];
+  tabs?: TabBuilder[];
+
+  // AutoLayout
+  padTop: number = 0;
+  defaultHeight?: number = undefined;
 
   public constructor() {
-    this.widgets = [];
   }
 
-  public width(width: number) {
+  public width(width: number): WindowBuilder {
     this._width = width;
     return this;
   }
 
-  public height(height: number) {
+  public height(height: number): WindowBuilder {
     this._height = height;
     return this;
   }
 
-  public title(title: string) {
+  public title(title: string): WindowBuilder {
     this._title = title;
     return this;
   }
 
-  public widget(w: WidgetBuilder) {
+  public widget(w: WidgetBuilder): WindowBuilder {
+    if (this.widgets === undefined) {
+      this.widgets = [];
+    }
     this.widgets.push(w);
     return this;
+  }
+
+  public tab(t: TabBuilder): WindowBuilder {
+    if (this.tabs === undefined) {
+      this.tabs = [];
+    }
+    this.tabs.push(t);
+    return this
   }
 
   public toDesc(): WindowDesc {
@@ -247,24 +262,56 @@ class WindowBuilder {
       width: this._width,
       height: this._height,
       title: this._title,
+      widgets: this.widgets?.map((w) => w.toDesc()),
+      tabs: this.tabs?.map((t) => t.toDesc())
+    }
+  }
+}
+
+class TabBuilder {
+  _image: IconName = "question";
+  widgets: WidgetBuilder[];
+
+  constructor() {
+    this.widgets = [];
+  }
+
+  image(img: IconName): TabBuilder {
+    this._image = img;
+    return this;
+  }
+
+  widget(w: WidgetBuilder): TabBuilder {
+    this.widgets.push(w);
+    return this;
+  }
+
+  toDesc(): WindowTabDesc {
+    return {
+      image: this._image,
       widgets: this.widgets.map((w) => w.toDesc())
     }
   }
 }
 
 export function createWeightWindowDesc(): WindowDesc {
+  const tabContentStartY = 50;  // Height copied from admission tab of game
+  const spinnerHeight = 20;
+
   let guestMass = new GuestMass(GUEST_MAX_WEIGHT);
 
+  const x = 6;
+  let y = tabContentStartY;
   let spinnerTemplate = new Spinner()
-    .x(10)
-    .y(20)
+    .x(x)
+    .y(y)
     .width(200)
     .height(15)
     .valueGetter(() => { return guestMass.value; })
     .valueSetter((v) => { guestMass.value = v; });
   let button = new Button()
-    .x(10)
-    .y(35)
+    .x(x)
+    .y(y += spinnerHeight)
     .width(200)
     .height(15)
     .text("Update All Guests")
@@ -274,7 +321,15 @@ export function createWeightWindowDesc(): WindowDesc {
     .width(400)
     .height(200)
     .title("Guest Weight Manager")
-    .widget(spinnerTemplate)
-    .widget(button)
+    .tab(
+      new TabBuilder()
+        .image("guests")
+        .widget(spinnerTemplate)
+        .widget(button)
+    )
+    .tab(
+      new TabBuilder()
+        .image("paintbrush")
+  )
     .toDesc();
 }
