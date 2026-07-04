@@ -146,7 +146,7 @@ class Spinner extends WidgetBuilder {
   }
 
   public override toDesc(): SpinnerDesc {
-    if (!this._valueGetter || !this._valueSetter) {
+    if (this._valueGetter === undefined || this._valueSetter === undefined) {
       throw new Error("Spinner must have both valueGetter and valueSetter");
     }
 
@@ -206,31 +206,75 @@ class Button extends WidgetBuilder {
   }
 }
 
-let guestMass = new GuestMass(GUEST_MAX_WEIGHT);
+class WindowBuilder {
+  classification: string = CLASSIFICATION;
+  _width?: number;
+  _height?: number;
+  _title?: string;
+  widgets: WidgetBuilder[];
 
-let spinnerTemplate = new Spinner()
-  .x(10)
-  .y(20)
-  .width(200)
-  .height(15)
-  .valueGetter(() => { return guestMass.value; })
-  .valueSetter((v) => { guestMass.value = v; });
-let button = new Button()
-  .x(10)
-  .y(35)
-  .width(200)
-  .height(15)
-  .text("Update All Guests")
-  .onClick(() => { setAllGuestsMass(guestMass.value); });
+  public constructor() {
+    this.widgets = [];
+  }
 
+  public width(width: number) {
+    this._width = width;
+    return this;
+  }
 
-export class WeightWindowDesc implements WindowDesc {
-  classification = CLASSIFICATION;
-  width = 400;
-  height = 200;
-  title = "Guest Weight Manager";
-  widgets = [
-    spinnerTemplate.toDesc(),
-    button.toDesc()
-  ]
-};
+  public height(height: number) {
+    this._height = height;
+    return this;
+  }
+
+  public title(title: string) {
+    this._title = title;
+    return this;
+  }
+
+  public widget(w: WidgetBuilder) {
+    this.widgets.push(w);
+    return this;
+  }
+
+  public toDesc(): WindowDesc {
+    if (this._width === undefined || this._height === undefined || this._title === undefined) {
+      throw new Error("WindowBuilder must have a width, height and title");
+    }
+
+    return {
+      classification: this.classification,
+      width: this._width,
+      height: this._height,
+      title: this._title,
+      widgets: this.widgets.map((w) => w.toDesc())
+    }
+  }
+}
+
+export function createWeightWindowDesc(): WindowDesc {
+  let guestMass = new GuestMass(GUEST_MAX_WEIGHT);
+
+  let spinnerTemplate = new Spinner()
+    .x(10)
+    .y(20)
+    .width(200)
+    .height(15)
+    .valueGetter(() => { return guestMass.value; })
+    .valueSetter((v) => { guestMass.value = v; });
+  let button = new Button()
+    .x(10)
+    .y(35)
+    .width(200)
+    .height(15)
+    .text("Update All Guests")
+    .onClick(() => { setAllGuestsMass(guestMass.value); });
+
+  return new WindowBuilder()
+    .width(400)
+    .height(200)
+    .title("Guest Weight Manager")
+    .widget(spinnerTemplate)
+    .widget(button)
+    .toDesc();
+}

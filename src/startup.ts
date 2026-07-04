@@ -1,4 +1,4 @@
-import { WeightWindowDesc } from "./window";
+import { createWeightWindowDesc } from "./window";
 
 export function startup() {
   // Write code here that should happen on startup of the plugin.
@@ -14,5 +14,5 @@ export function startup() {
  */
 function onClickMenuItem() {
   // Write code here that should happen when the player clicks the menu item under the map icon.
-  ui.openWindow(new WeightWindowDesc());
+  ui.openWindow(createWeightWindowDesc());
 }
