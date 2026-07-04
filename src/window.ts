@@ -1,5 +1,8 @@
+import { GuestMass, GUEST_MAX_WEIGHT, setAllGuestsMass } from "./guests";
+
 
 const CLASSIFICATION = "guest-weight-manager";
+
 
 class SpinnerController {
   widgetName: string;
@@ -175,24 +178,50 @@ class Spinner extends WidgetBuilder {
   }
 }
 
-// class Button {
-//   public toDesc(): ButtonDesc {
-//     return {
-//       type: "button",
-//       x:
-//     }
-//   }
-// }
+class Button extends WidgetBuilder {
+  _text?: string;
+  _onClick?: () => void;
 
-let spinnerValue = 15;
+  constructor(name?: string) {
+    super(name);
+  }
+
+  public text(text: string) {
+    this._text = text;
+    return this;
+  }
+
+  public onClick(onClick: () => void) {
+    this._onClick = onClick;
+    return this;
+  }
+
+  public override toDesc(): ButtonDesc {
+    return {
+      ...super.toDesc(),
+      type: "button",
+      text: this._text,
+      onClick: this._onClick,
+    }
+  }
+}
+
+let guestMass = new GuestMass(GUEST_MAX_WEIGHT);
 
 let spinnerTemplate = new Spinner()
   .x(10)
   .y(20)
   .width(200)
   .height(15)
-  .valueGetter(() => { return spinnerValue; })
-  .valueSetter((v: number) => { spinnerValue = Math.min(Math.max(v, 10), 20); });
+  .valueGetter(() => { return guestMass.value; })
+  .valueSetter((v) => { guestMass.value = v; });
+let button = new Button()
+  .x(10)
+  .y(35)
+  .width(200)
+  .height(15)
+  .text("Update All Guests")
+  .onClick(() => { setAllGuestsMass(guestMass.value); });
 
 
 export class WeightWindowDesc implements WindowDesc {
@@ -201,6 +230,7 @@ export class WeightWindowDesc implements WindowDesc {
   height = 200;
   title = "Guest Weight Manager";
   widgets = [
-    spinnerTemplate.toDesc()
+    spinnerTemplate.toDesc(),
+    button.toDesc()
   ]
 };
