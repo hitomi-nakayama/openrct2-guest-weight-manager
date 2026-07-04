@@ -43,10 +43,85 @@ class SpinnerController {
   }
 }
 
-class Spinner {
-  static numSpinners = 0;
+class WidgetBuilder {
+  static numWidgets = 0;
+  _x?: number;
+  _y?: number;
+  _width?: number;
+  _height?: number;
   name: string;
+  _tooltip?: string;
+  _isDisabled: boolean = false;
+  _isVisible: boolean = true;
 
+  constructor(name?: string) {
+    if (name === undefined) {
+      this.name = `widget_${Spinner.numWidgets++}`;
+    } else {
+      this.name = name;
+    }
+  }
+
+  public x(x: number) {
+    this._x = x;
+    return this;
+  }
+  public y(y: number) {
+    this._y = y;
+    return this;
+  }
+  public width(width: number) {
+    this._width = width;
+    return this;
+  }
+
+  public height(height: number) {
+    this._height = height;
+    return this;
+  }
+
+  public tooltip(tooltip: string) {
+    this._tooltip = tooltip;
+    return this;
+  }
+
+  public isDisabled(isDisabled: boolean) {
+    this._isDisabled = isDisabled;
+    return this;
+  }
+
+  public isVisible(isVisible: boolean) {
+    this._isVisible = isVisible;
+    return this;
+  }
+
+  public toDesc(): WidgetBaseDesc {
+    if (this._x === undefined
+      || this._y === undefined
+      || this._width === undefined
+      || this._height === undefined) {
+
+      throw new Error("WidgetBaseDesc requires x, y, width, and height");
+    }
+    return {
+      // this field will need to be overridden by other implementers of this
+      // class.
+      // We have to do it this way because of TS's type checker.
+      type: "custom",
+
+      x: this._x,
+      y: this._y,
+      width: this._width,
+      height: this._height,
+      name: this.name,
+      tooltip: this._tooltip,
+      isDisabled: this._isDisabled,
+      isVisible: this._isVisible,
+    };
+  }
+}
+
+class Spinner extends WidgetBuilder {
   // this callback gets the value from the model.
   _valueGetter?: () => number;
 
@@ -54,11 +129,7 @@ class Spinner {
   _valueSetter?: (_: number) => void;
 
   constructor(name?: string) {
-    if (name === undefined) {
-      this.name = `spinner_${Spinner.numSpinners++}`;
-    } else {
-      this.name = name;
-    }
+    super(name);
   }
 
   public valueGetter(valueGetter: () => number): Spinner{
@@ -71,7 +142,7 @@ class Spinner {
     return this;
   }
 
-  public toDesc(): SpinnerDesc {
+  public override toDesc(): SpinnerDesc {
     if (!this._valueGetter || !this._valueSetter) {
       throw new Error("Spinner must have both valueGetter and valueSetter");
     }
@@ -94,15 +165,9 @@ class Spinner {
     };
 
     return {
+      ...super.toDesc(),
       type: "spinner",
-      name: this.name,
-      x: 10,
-      y: 20,
-      width: 200,
-      height: 15,
       text: spinnerCtrl.value.toString(),
-      isDisabled: false,
-      isVisible: true,
       onIncrement: onIncrement,
       onDecrement: onDecrement,
       onClick: onClick
@@ -110,9 +175,22 @@ class Spinner {
   }
 }
 
+// class Button {
+//   public toDesc(): ButtonDesc {
+//     return {
+//       type: "button",
+//       x:
+//     }
+//   }
+// }
+
 let spinnerValue = 15;
 
 let spinnerTemplate = new Spinner()
+  .x(10)
+  .y(20)
+  .width(200)
+  .height(15)
   .valueGetter(() => { return spinnerValue; })
   .valueSetter((v: number) => { spinnerValue = Math.min(Math.max(v, 10), 20); });
 
